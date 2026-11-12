@@ -150,8 +150,11 @@ internal static partial class SnipasteOcr
     private static string Recognize(byte[] png, string language)
     {
         string powershell = Path.Combine(Environment.SystemDirectory, @"WindowsPowerShell\v1.0\powershell.exe");
-        string script = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "recognize.ps1");
-        var start = new ProcessStartInfo(powershell, "-NoLogo -NoProfile -NonInteractive -File \"" + script + "\" " + language)
+        string command;
+        using (var script = new StreamReader(typeof(SnipasteOcr).Assembly.GetManifestResourceStream("SnipasteOcr.recognize.ps1")))
+            command = "& {\r\n" + script.ReadToEnd() + "\r\n} -LanguageTag '" + language + "'";
+        string encodedCommand = Convert.ToBase64String(Encoding.Unicode.GetBytes(command));
+        var start = new ProcessStartInfo(powershell, "-NoLogo -NoProfile -NonInteractive -EncodedCommand " + encodedCommand)
         {
             UseShellExecute = false,
             CreateNoWindow = true,
